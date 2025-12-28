@@ -2,6 +2,7 @@
 ## Power BI vs Metabase vs Grafana - Technical Analysis for Logistics Startups
 
 ---
+## Author:  Malik Mubarak and DAT
 
 ## Executive Summary
 
