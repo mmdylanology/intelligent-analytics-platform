@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana-shipments
+    restart: unless-stopped
+    ports:
+      - "3001:3000"  # Access at http://localhost:3001 (Metabase uses 3000)
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin  # Change this after first login!
+      - GF_INSTALL_PLUGINS=grafana-clock-panel,grafana-worldmap-panel,grafana-piechart-panel
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_SERVER_ROOT_URL=http://localhost:3001
+    volumes:
+      # Grafana data (dashboards, users, settings) - PERSISTED on your Mac
+      - grafana-data:/var/lib/grafana
+      # Datasource config - auto-configure Postgres connection
+      - ./provisioning/datasources:/etc/grafana/provisioning/datasources
+      # Pre-built dashboards - auto-load on startup
+      - ./provisioning/dashboards:/etc/grafana/provisioning/dashboards
+      # Dashboard JSON files
+      - ./dashboards:/var/lib/grafana/dashboards
+    networks:
+      - grafana-network
+
+volumes:
+  # This volume persists Grafana data on your Mac
+  # Even if you delete the container, your dashboards remain safe
+  grafana-data:
+    driver: local
+
+networks:
+  grafana-network:
+    driver: bridge

@@ -1,0 +1,18 @@
+apiVersion: 1
+
+datasources:
+  - name: Nucleo Postgres
+    type: postgres
+    access: proxy
+    url: serhafen-db-postgres-staging.cluster-chgg2qqoy9y6.us-east-1.rds.amazonaws.com:5432
+    database: nucleo
+    user: postgres
+    jsonData:
+      sslmode: disable
+      postgresVersion: 1400
+      timescaledb: false
+    secureJsonData:
+      password: "d0=JIim46R6:dLg$KW"
+    editable: true
+    isDefault: true
+    uid: PB28DCAEFB3F86196

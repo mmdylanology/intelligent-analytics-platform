@@ -1,0 +1,18 @@
+# Environment variables (contains sensitive credentials)
+.env
+
+# Backup files (can be large and contain sensitive data)
+backups/
+
+# Grafana volume data (managed by Docker)
+grafana-data/
+
+# macOS
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+
+# Logs
+*.log
