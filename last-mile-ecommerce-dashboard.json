@@ -17,14 +17,126 @@
   },
   "editable": true,
   "fiscalYearStartMonth": 0,
-  "graphTooltip": 1,
-  "id": null,
+  "graphTooltip": 0,
+  "id": 0,
   "links": [],
-  "liveNow": false,
   "panels": [
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 2,
+            "pointSize": 10,
+            "scaleDistribution": {
+              "log": 2,
+              "type": "log"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 16,
+      "options": {
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n    DATE_TRUNC('day', pal.new_status_occurred_at) as time,\n    csm.es_name as status,\n    COUNT(*) as changes\nFROM packages_activity_log pal\nLEFT JOIN canonical_status_master csm ON pal.new_canonical_status_code = csm.code\nWHERE pal.new_canonical_status_code IS NOT NULL\nGROUP BY time, csm.es_name\nORDER BY time",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Package Status Activity Timeline",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
         "uid": "PB28DCAEFB3F86196"
       },
       "fieldConfig": {
@@ -37,75 +149,80 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "blue",
-                "value": null
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
-          },
-          "unit": "short"
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
+        "h": 9,
         "w": 4,
-        "x": 0,
+        "x": 12,
         "y": 0
       },
       "id": 1,
       "options": {
         "colorMode": "value",
-        "graphMode": "none",
-        "justifyMode": "center",
+        "graphMode": "area",
+        "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "values": false,
           "calcs": [
             "lastNotNull"
           ],
-          "fields": ""
+          "fields": "",
+          "values": false
         },
-        "textMode": "value_and_name"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "10.0.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
+          "dataset": "nucleo",
           "datasource": {
-            "type": "postgres",
+            "type": "grafana-postgresql-datasource",
             "uid": "PB28DCAEFB3F86196"
           },
+          "editorMode": "code",
           "format": "table",
-          "group": [],
-          "metricColumn": "none",
           "rawQuery": true,
-          "rawSql": "\n                SELECT COUNT(DISTINCT package_id) as \"TOTAL PEDIDOS\"\n                FROM packages\n                WHERE EXTRACT(YEAR FROM created_at) = $year\n                  AND EXTRACT(MONTH FROM created_at) = $month\n            ",
+          "rawSql": "SELECT COUNT(DISTINCT package_id) as value\nFROM packages",
           "refId": "A",
-          "select": [
-            [
+          "sql": {
+            "columns": [
               {
-                "params": [
-                  "value"
-                ],
-                "type": "column"
+                "parameters": [],
+                "type": "function"
               }
-            ]
-          ],
-          "timeColumn": "time",
-          "where": [
-            {
-              "name": "$__timeFilter",
-              "params": [],
-              "type": "macro"
-            }
-          ]
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
-      "title": "TOTAL PEDIDOS",
+      "title": "Total Packages",
       "type": "stat"
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "PB28DCAEFB3F86196"
       },
       "fieldConfig": {
@@ -114,22 +231,98 @@
             "mode": "thresholds"
           },
           "mappings": [],
-          "max": 100,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
-                "value": null
+                "color": "green",
+                "value": 0
               },
               {
-                "color": "yellow",
-                "value": 70
-              },
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 4,
+        "x": 16,
+        "y": 0
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT package_id) as value\nFROM packages_activity_log\nWHERE new_canonical_status_code = '7050'",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Successfully Delivered",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
               {
                 "color": "green",
-                "value": 85
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           },
@@ -138,43 +331,141 @@
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 5,
-        "x": 4,
+        "h": 9,
+        "w": 4,
+        "x": 20,
         "y": 0
       },
-      "id": 2,
+      "id": 10,
       "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
         "orientation": "auto",
         "reduceOptions": {
-          "values": false,
           "calcs": [
             "lastNotNull"
           ],
-          "fields": ""
+          "fields": "",
+          "values": false
         },
         "showThresholdLabels": false,
-        "showThresholdMarkers": true
+        "showThresholdMarkers": true,
+        "sizing": "auto"
       },
-      "pluginVersion": "10.0.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {
-            "type": "postgres",
-            "uid": "PB28DCAEFB3F86196"
-          },
+          "dataset": "nucleo",
+          "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "\n                -- Count packages with delivered status\n                WITH status_count AS (\n                    SELECT \n                        COUNT(*) as total,\n                        COUNT(CASE \n                            WHEN canonical_status_code LIKE '%EX%' \n                             OR canonical_status_code LIKE '%DELIVERED%'\n                            THEN 1 \n                        END) as delivered_count\n                    FROM packages\n                    WHERE EXTRACT(YEAR FROM created_at) = $year\n                      AND EXTRACT(MONTH FROM created_at) = $month\n                )\n                SELECT \n                    ROUND(100.0 * delivered_count / NULLIF(total, 0), 2) as value\n                FROM status_count\n            ",
-          "refId": "A"
+          "rawSql": "WITH total AS (\n    SELECT COUNT(DISTINCT package_id) as t FROM packages\n),\ndelivered AS (\n    SELECT COUNT(DISTINCT package_id) as d \n    FROM packages_activity_log \n    WHERE new_canonical_status_code = '7050'\n)\nSELECT ROUND(100.0 * d / NULLIF(t, 0), 2) as value \nFROM total, delivered",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
-      "title": "OTIF GENERAL",
+      "title": "Delivery Success Rate %",
       "type": "gauge"
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            }
+          },
+          "mappings": []
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 8
+      },
+      "id": 15,
+      "options": {
+        "legend": {
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "pieType": "pie",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "sort": "desc",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        }
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n    COALESCE(executor_name, 'Unknown') as carrier,\n    COUNT(DISTINCT package_id) as packages\nFROM packages\nGROUP BY executor_name\nORDER BY packages DESC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Packages by Carrier",
+      "type": "piechart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
         "uid": "PB28DCAEFB3F86196"
       },
       "fieldConfig": {
@@ -187,132 +478,76 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 75
-              },
-              {
                 "color": "green",
-                "value": 90
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
-          },
-          "unit": "percent"
+          }
         },
         "overrides": []
       },
       "gridPos": {
-        "h": 6,
-        "w": 4,
-        "x": 9,
-        "y": 0
+        "h": 13,
+        "w": 12,
+        "x": 12,
+        "y": 9
       },
-      "id": 3,
+      "id": 11,
       "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
         "orientation": "auto",
+        "percentChangeColorMode": "standard",
         "reduceOptions": {
-          "values": false,
           "calcs": [
             "lastNotNull"
           ],
-          "fields": ""
+          "fields": "",
+          "values": false
         },
-        "textMode": "value_and_name"
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
       },
-      "pluginVersion": "10.0.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {
-            "type": "postgres",
-            "uid": "PB28DCAEFB3F86196"
-          },
+          "dataset": "nucleo",
+          "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "\n                -- Calculate ON TIME percentage (placeholder)\n                SELECT 95.74 as \"% ON TIME\"\n            ",
-          "refId": "A"
+          "rawSql": "WITH delivery_times AS (\n    SELECT \n        p.package_id,\n        MIN(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) as picked,\n        MIN(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) as delivered\n    FROM packages p\n    JOIN packages_activity_log pal ON p.package_id = pal.package_id\n    GROUP BY p.package_id\n)\nSELECT ROUND(AVG(EXTRACT(EPOCH FROM (delivered - picked)) / 3600)::numeric, 2) as value\nFROM delivery_times\nWHERE picked IS NOT NULL AND delivered IS NOT NULL",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
-      "title": "% ON TIME",
+      "title": "Avg Delivery Time (Hours)",
       "type": "stat"
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "PB28DCAEFB3F86196"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "red",
-                "value": null
-              },
-              {
-                "color": "yellow",
-                "value": 75
-              },
-              {
-                "color": "green",
-                "value": 90
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 4,
-        "x": 13,
-        "y": 0
-      },
-      "id": 4,
-      "options": {
-        "colorMode": "background",
-        "graphMode": "none",
-        "justifyMode": "center",
-        "orientation": "auto",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "textMode": "value_and_name"
-      },
-      "pluginVersion": "10.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "PB28DCAEFB3F86196"
-          },
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "\n                -- Calculate IN FULL percentage (placeholder)\n                SELECT 95.32 as \"% IN FULL\"\n            ",
-          "refId": "A"
-        }
-      ],
-      "title": "% IN FULL",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "PB28DCAEFB3F86196"
       },
       "fieldConfig": {
@@ -321,160 +556,37 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            }
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 4,
-        "x": 17,
-        "y": 0
-      },
-      "id": 5,
-      "options": {
-        "displayLabels": [
-          "name",
-          "value"
-        ],
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "pieType": "pie",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "PB28DCAEFB3F86196"
-          },
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "\n                SELECT \n                    'Fuera de Tiempo' as metric,\n                    50 as value\n                UNION ALL\n                SELECT \n                    'A Tiempo' as metric,\n                    1125 as value\n            ",
-          "refId": "A"
-        }
-      ],
-      "title": "A Tiempo",
-      "type": "piechart"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "PB28DCAEFB3F86196"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            }
-          },
-          "mappings": []
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 6,
-        "w": 3,
-        "x": 21,
-        "y": 0
-      },
-      "id": 6,
-      "options": {
-        "displayLabels": [
-          "name",
-          "value"
-        ],
-        "legend": {
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "pieType": "pie",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "PB28DCAEFB3F86196"
-          },
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "\n                SELECT \n                    'Pendiente' as metric,\n                    51 as value\n                UNION ALL\n                SELECT \n                    'Cerrado' as metric,\n                    1124 as value\n            ",
-          "refId": "A"
-        }
-      ],
-      "title": "CERRADO",
-      "type": "piechart"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "PB28DCAEFB3F86196"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
             "barAlignment": 0,
+            "barWidthFactor": 0.6,
             "drawStyle": "line",
             "fillOpacity": 0,
             "gradientMode": "none",
             "hideFrom": {
+              "legend": false,
               "tooltip": false,
-              "viz": false,
-              "legend": false
+              "viz": false
             },
-            "lineInterpolation": "smooth",
-            "lineWidth": 2,
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineStyle": {
+              "fill": "solid"
+            },
+            "lineWidth": 1,
             "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
             },
             "showPoints": "always",
+            "showValues": false,
             "spanNulls": false,
             "stacking": {
-              "mode": "none",
-              "group": "A"
+              "group": "A",
+              "mode": "none"
             },
             "thresholdsStyle": {
               "mode": "off"
@@ -486,51 +598,71 @@
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
-          },
-          "unit": "short"
+          }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 14,
+        "w": 12,
         "x": 0,
-        "y": 6
+        "y": 16
       },
-      "id": 7,
+      "id": 14,
       "options": {
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
         }
       },
-      "pluginVersion": "10.0.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {
-            "type": "postgres",
-            "uid": "PB28DCAEFB3F86196"
-          },
-          "format": "time_series",
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
           "rawQuery": true,
-          "rawSql": "\n                SELECT \n                    DATE_TRUNC('week', created_at) as time,\n                    'Semana ' || EXTRACT(WEEK FROM created_at)::text as metric,\n                    COUNT(*) as value\n                FROM packages\n                WHERE EXTRACT(YEAR FROM created_at) = $year\n                  AND EXTRACT(MONTH FROM created_at) = $month\n                GROUP BY time, metric\n                ORDER BY time\n            ",
-          "refId": "A"
+          "rawSql": "SELECT \n    DATE_TRUNC('day', created_at) as time,\n    COUNT(DISTINCT package_id) as packages\nFROM packages\nGROUP BY time\nORDER BY time",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
-      "title": "Cant Pedidos Real",
+      "title": "Daily Package Creation",
       "type": "timeseries"
     },
     {
       "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "PB28DCAEFB3F86196"
       },
       "fieldConfig": {
@@ -539,289 +671,214 @@
             "mode": "palette-classic"
           },
           "custom": {
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            }
-          },
-          "mappings": []
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Local"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "blue",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Nacional"
-            },
-            "properties": [
-              {
-                "id": "color",
-                "value": {
-                  "fixedColor": "orange",
-                  "mode": "fixed"
-                }
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 10,
-        "x": 14,
-        "y": 6
-      },
-      "id": 8,
-      "options": {
-        "displayLabels": [
-          "name",
-          "value",
-          "percent"
-        ],
-        "legend": {
-          "displayMode": "table",
-          "placement": "right",
-          "values": [
-            "value",
-            "percent"
-          ]
-        },
-        "pieType": "donut",
-        "reduceOptions": {
-          "values": false,
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": ""
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "PB28DCAEFB3F86196"
-          },
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "\n                -- Placeholder: Determine Local vs Nacional\n                -- Assuming: PE packages are Local, others Nacional\n                SELECT \n                    CASE \n                        WHEN destination_country = 'PE' THEN 'Local'\n                        ELSE 'Nacional'\n                    END as coverage,\n                    COUNT(*) as value\n                FROM packages\n                WHERE EXTRACT(YEAR FROM created_at) = $year\n                  AND EXTRACT(MONTH FROM created_at) = $month\n                GROUP BY coverage\n            ",
-          "refId": "A"
-        }
-      ],
-      "title": "COBERTURA",
-      "type": "piechart"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
-        "uid": "PB28DCAEFB3F86196"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
             "axisLabel": "",
             "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "bars",
             "fillOpacity": 80,
             "gradientMode": "none",
             "hideFrom": {
+              "legend": false,
               "tooltip": false,
-              "viz": false,
-              "legend": false
+              "viz": false
             },
-            "lineInterpolation": "linear",
             "lineWidth": 1,
-            "pointSize": 5,
             "scaleDistribution": {
               "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
             },
             "thresholdsStyle": {
               "mode": "off"
             }
           },
           "mappings": [],
-          "max": 100,
-          "min": 0,
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
-          },
-          "unit": "percent"
+          }
         },
         "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 7,
+        "w": 12,
+        "x": 12,
+        "y": 22
+      },
+      "id": 6,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n    csm.es_name as reason,\n    COUNT(DISTINCT pal.package_id) as packages\nFROM packages_activity_log pal\nJOIN canonical_status_master csm ON pal.new_canonical_status_code = csm.code\nWHERE pal.new_canonical_status_code IN (\n    '5523',  -- Recipient uncontactable\n    '5524',  -- Recipient not at home\n    '5525',  -- Incorrect delivery address\n    '5530',  -- Delivery delay\n    '6043',  -- Sorting error\n    '7060',  -- Not delivered\n    '7080'   -- Not delivered at office\n)\nGROUP BY csm.es_name, csm.code\nORDER BY packages DESC\nLIMIT 10",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Top 10 Delivery Failure Reasons",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
         "x": 0,
-        "y": 14
+        "y": 24
       },
-      "id": 9,
+      "id": 13,
       "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
         "legend": {
           "calcs": [],
           "displayMode": "list",
-          "placement": "bottom"
+          "placement": "bottom",
+          "showLegend": true
         },
+        "orientation": "horizontal",
+        "showValue": "auto",
+        "stacking": "none",
         "tooltip": {
+          "hideZeros": false,
           "mode": "single",
           "sort": "none"
-        }
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
       },
-      "pluginVersion": "10.0.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {
-            "type": "postgres",
-            "uid": "PB28DCAEFB3F86196"
-          },
+          "dataset": "nucleo",
+          "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "\n                SELECT \n                    CASE \n                        WHEN destination_country = 'PE' THEN 'Local'\n                        ELSE 'Nacional'\n                    END as coverage,\n                    98.21 as percent_on_time\n                FROM (SELECT 'PE' as destination_country) t\n                UNION ALL\n                SELECT 'Nacional', 90.82\n            ",
-          "refId": "A"
-        }
-      ],
-      "title": "% ON TIME",
-      "transformations": [
-        {
-          "id": "organize",
-          "options": {
-            "excludeByName": {},
-            "indexByName": {
-              "coverage": 0,
-              "percent_on_time": 1
-            },
-            "renameByName": {}
+          "rawSql": "SELECT \n    csm.es_name as status,\n    COUNT(DISTINCT p.package_id) as packages\nFROM packages p\nLEFT JOIN canonical_status_master csm ON p.canonical_status_code = csm.code\nGROUP BY csm.es_name\nORDER BY packages DESC",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
           }
         }
       ],
+      "title": "Packages by Current Status",
       "type": "barchart"
     },
     {
       "datasource": {
-        "type": "postgres",
-        "uid": "PB28DCAEFB3F86196"
-      },
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "palette-classic"
-          },
-          "custom": {
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "barAlignment": 0,
-            "drawStyle": "bars",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "tooltip": false,
-              "viz": false,
-              "legend": false
-            },
-            "lineInterpolation": "linear",
-            "lineWidth": 1,
-            "pointSize": 5,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "showPoints": "never",
-            "spanNulls": false,
-            "stacking": {
-              "mode": "none",
-              "group": "A"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "max": 100,
-          "min": 0,
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": null
-              }
-            ]
-          },
-          "unit": "percent"
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 7,
-        "x": 7,
-        "y": 14
-      },
-      "id": 10,
-      "options": {
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom"
-        },
-        "tooltip": {
-          "mode": "single",
-          "sort": "none"
-        }
-      },
-      "pluginVersion": "10.0.0",
-      "targets": [
-        {
-          "datasource": {
-            "type": "postgres",
-            "uid": "PB28DCAEFB3F86196"
-          },
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "\n                SELECT \n                    CASE \n                        WHEN destination_country = 'PE' THEN 'Local'\n                        ELSE 'Nacional'\n                    END as coverage,\n                    98.98 as percent_in_full\n                FROM (SELECT 'PE' as destination_country) t\n                UNION ALL\n                SELECT 'Nacional', 88.01\n            ",
-          "refId": "A"
-        }
-      ],
-      "title": "% IN FULL",
-      "type": "barchart"
-    },
-    {
-      "datasource": {
-        "type": "postgres",
+        "type": "grafana-postgresql-datasource",
         "uid": "PB28DCAEFB3F86196"
       },
       "fieldConfig": {
@@ -831,16 +888,32 @@
           },
           "custom": {
             "align": "auto",
-            "displayMode": "auto",
+            "cellOptions": {
+              "type": "pill"
+            },
+            "filterable": false,
+            "footer": {
+              "reducers": []
+            },
             "inspect": false
           },
+          "links": [
+            {
+              "title": "Filter to Province: ${__data.fields.Province}",
+              "url": "/d/adgwkmw/last-mile-operations-analytics?var-province=${__data.fields.Province}"
+            },
+            {
+              "title": "Filter to District: ${__data.fields.District}",
+              "url": "/d/adgwkmw/last-mile-operations-analytics?var-district=${__data.fields.District}"
+            }
+          ],
           "mappings": [],
           "thresholds": {
             "mode": "absolute",
             "steps": [
               {
                 "color": "green",
-                "value": null
+                "value": 0
               },
               {
                 "color": "red",
@@ -849,153 +922,740 @@
             ]
           }
         },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "%ONTIME"
-            },
-            "properties": [
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 11,
+        "x": 12,
+        "y": 30
+      },
+      "id": 8,
+      "options": {
+        "cellHeight": "sm",
+        "enablePagination": false,
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "hide": false,
+          "rawQuery": true,
+          "rawSql": "SELECT \n    COALESCE(s.province, 'Unknown') as \"Province\",\n    COALESCE(s.district, '(Empty)') as \"District\",\n    COUNT(DISTINCT p.package_id) as \"Packages\",\n    \n    -- Calculate REAL delivery time: from picked (7020) to delivered (7050)\n    ROUND(AVG(\n        EXTRACT(EPOCH FROM (\n            (SELECT MAX(pal_delivered.new_status_occurred_at) \n             FROM packages_activity_log pal_delivered \n             WHERE pal_delivered.package_id = p.package_id \n               AND pal_delivered.new_canonical_status_code = '7050')\n            -\n            (SELECT MAX(pal_picked.new_status_occurred_at) \n             FROM packages_activity_log pal_picked \n             WHERE pal_picked.package_id = p.package_id \n               AND pal_picked.new_canonical_status_code = '7020')\n        )) / 3600\n    )::numeric, 2) as \"Avg Hours\",\n    \n    COUNT(CASE WHEN EXISTS (\n        SELECT 1 FROM packages_activity_log pal \n        WHERE pal.package_id = p.package_id \n          AND pal.new_canonical_status_code = '7050'\n    ) THEN 1 END) as \"Delivered\",\n    \n    ROUND(100.0 * \n        COUNT(CASE WHEN EXISTS (\n            SELECT 1 FROM packages_activity_log pal \n            WHERE pal.package_id = p.package_id \n              AND pal.new_canonical_status_code = '7050'\n        ) THEN 1 END) / \n        NULLIF(COUNT(*), 0), \n    2) as \"Success %\"\n    \nFROM packages p\nLEFT JOIN vw_get_shipments s ON p.shipment_id = s.shipment_id\nGROUP BY s.province, s.district\nORDER BY \"Packages\" DESC\nLIMIT 50",
+          "refId": "A",
+          "sql": {
+            "columns": [
               {
-                "id": "custom.displayMode",
-                "value": "gradient-gauge"
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "National Geographic",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
               },
               {
-                "id": "unit",
-                "value": "percent"
+                "color": "red",
+                "value": 80
+              }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 32
+      },
+      "id": 12,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH delivery_times AS (\n    SELECT \n        p.package_id,\n        MIN(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) as picked,\n        MIN(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) as delivered\n    FROM packages p\n    JOIN packages_activity_log pal ON p.package_id = pal.package_id\n    GROUP BY p.package_id\n    HAVING MIN(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) IS NOT NULL\n      AND MIN(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) IS NOT NULL\n)\nSELECT \n    ROUND(100.0 * \n        COUNT(*) FILTER (WHERE EXTRACT(EPOCH FROM (delivered - picked)) / 3600 <= 48) / \n        NULLIF(COUNT(*), 0), \n    2) as value\nFROM delivery_times",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "On-Time Delivery % (48h SLA)",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
               }
             ]
           }
-        ]
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 6,
+        "x": 17,
+        "y": 40
+      },
+      "id": 3,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  CASE \n    WHEN executor_status = 'CREATED' THEN 'Created'\n    WHEN executor_status ILIKE '%exitosa%' THEN 'Delivered Successfully'\n    WHEN executor_status ILIKE '%fallida%' OR executor_status ILIKE '%fallido%' THEN 'Failed Delivery'\n    WHEN executor_status ILIKE '%custodia%' THEN 'In Custody'\n    WHEN executor_status ILIKE '%tránsito%' OR executor_status ILIKE '%transito%' THEN 'In Transit'\n    ELSE 'Other'\n  END as status,\n  COUNT(*) as count\nFROM executor_status_updates esu\nJOIN packages p ON esu.package_id = p.package_id\nWHERE \n  '${carrier:csv}' = '' \n  OR COALESCE(p.executor_name, 'Unknown') IN (${carrier:singlequote})\nGROUP BY status\nORDER BY count DESC;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Delivery Status",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "fieldMinMax": false,
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 5,
+        "x": 0,
+        "y": 41
+      },
+      "id": 2,
+      "options": {
+        "minVizHeight": 75,
+        "minVizWidth": 75,
+        "orientation": "auto",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": true
+        },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true,
+        "sizing": "auto"
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  COALESCE(executor_name, 'Unknown') as carrier,\n  COUNT(*) as packages\nFROM packages\nWHERE \n  '${carrier:csv}' = '' \n  OR COALESCE(executor_name, 'Unknown') IN (${carrier:singlequote})\nGROUP BY executor_name\nORDER BY packages DESC;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Packages by Carrier",
+      "type": "gauge"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "barWidthFactor": 0.6,
+            "drawStyle": "line",
+            "fillOpacity": 0,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "insertNulls": false,
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "showPoints": "auto",
+            "showValues": false,
+            "spanNulls": false,
+            "stacking": {
+              "group": "A",
+              "mode": "none"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
       },
       "gridPos": {
         "h": 8,
-        "w": 10,
-        "x": 14,
-        "y": 14
+        "w": 12,
+        "x": 6,
+        "y": 49
       },
-      "id": 11,
+      "id": 4,
       "options": {
-        "footer": {
-          "fields": "",
-          "reducer": [
-            "sum"
-          ],
-          "show": false
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
         },
-        "showHeader": true
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        }
       },
-      "pluginVersion": "10.0.0",
+      "pluginVersion": "12.3.1",
       "targets": [
         {
-          "datasource": {
-            "type": "postgres",
-            "uid": "PB28DCAEFB3F86196"
-          },
+          "dataset": "nucleo",
+          "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "\n                SELECT \n                    EXTRACT(WEEK FROM created_at)::int as \"Semana\",\n                    50 as \"Fuera de tiempo\",\n                    COUNT(*) as \"RED TOTALES\",\n                    96.33 as \"%ONTIME\"\n                FROM packages\n                WHERE EXTRACT(YEAR FROM created_at) = $year\n                  AND EXTRACT(MONTH FROM created_at) = $month\n                GROUP BY \"Semana\"\n                ORDER BY \"Semana\"\n            ",
-          "refId": "A"
+          "rawSql": "SELECT \n  DATE(created_at) as time,\n  COUNT(*) as packages\nFROM packages\nWHERE \n  '${carrier:csv}' = '' \n  OR COALESCE(executor_name, 'Unknown') IN (${carrier:singlequote})\nGROUP BY DATE(created_at)\nORDER BY time;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
         }
       ],
-      "title": "ON_TIME SEMANAL",
-      "type": "table"
+      "title": "Daily Package Creation",
+      "type": "timeseries"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 4,
+        "x": 19,
+        "y": 49
+      },
+      "id": 5,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  ship_to_address->>'province' as province,\n  COUNT(*) as packages\nFROM shipments\nWHERE ship_to_address->>'province' IS NOT NULL\nGROUP BY province\nORDER BY packages DESC\nLIMIT 10;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Top 10 Provinces by Package Volume",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "palette-classic"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 9,
+        "w": 9,
+        "x": 0,
+        "y": 57
+      },
+      "id": 7,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  COALESCE(p.executor_name, 'Unknown') as carrier,\n  COUNT(*) as package_count,\n  ROUND(AVG(EXTRACT(EPOCH FROM (latest_status_occurred_at - created_at))/3600)::numeric, 2) as avg_hours\nFROM packages p\nWHERE latest_status_occurred_at IS NOT NULL\n  AND latest_status_occurred_at > created_at\n  AND (\n    '${carrier:csv}' = '' \n    OR COALESCE(p.executor_name, 'Unknown') IN (${carrier:singlequote})\n  )\nGROUP BY p.executor_name\nHAVING COUNT(*) > 5\nORDER BY package_count DESC;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Average Processing Time by Carrier (Hours)",
+      "type": "barchart"
     }
   ],
-  "refresh": "30s",
-  "schemaVersion": 38,
-  "style": "dark",
-  "tags": [
-    "ecommerce",
-    "last-mile",
-    "operations",
-    "logistics"
-  ],
+  "preload": false,
+  "schemaVersion": 42,
+  "tags": [],
   "templating": {
     "list": [
       {
         "current": {
-          "selected": false,
-          "text": "2025",
-          "value": "2025"
-        },
-        "datasource": {
-          "type": "postgres",
-          "uid": "PB28DCAEFB3F86196"
-        },
-        "definition": "SELECT DISTINCT EXTRACT(YEAR FROM created_at)::text as value FROM packages ORDER BY value DESC",
-        "hide": 0,
-        "includeAll": false,
-        "label": "Año",
-        "multi": false,
-        "name": "year",
-        "options": [],
-        "query": "SELECT DISTINCT EXTRACT(YEAR FROM created_at)::text as value FROM packages ORDER BY value DESC",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 1,
-        "type": "query"
-      },
-      {
-        "current": {
-          "selected": false,
-          "text": "10",
-          "value": "10"
-        },
-        "datasource": {
-          "type": "postgres",
-          "uid": "PB28DCAEFB3F86196"
-        },
-        "definition": "SELECT DISTINCT EXTRACT(MONTH FROM created_at)::text as value FROM packages WHERE EXTRACT(YEAR FROM created_at) = $year ORDER BY value DESC",
-        "hide": 0,
-        "includeAll": false,
-        "label": "Mes",
-        "multi": false,
-        "name": "month",
-        "options": [],
-        "query": "SELECT DISTINCT EXTRACT(MONTH FROM created_at)::text as value FROM packages WHERE EXTRACT(YEAR FROM created_at) = $year ORDER BY value DESC",
-        "refresh": 1,
-        "regex": "",
-        "skipUrlSync": false,
-        "sort": 1,
-        "type": "query"
-      },
-      {
-        "allValue": ".*",
-        "current": {
-          "selected": true,
           "text": "All",
-          "value": "$__all"
+          "value": [
+            "$__all"
+          ]
         },
-        "datasource": {
-          "type": "postgres",
-          "uid": "PB28DCAEFB3F86196"
-        },
-        "definition": "SELECT DISTINCT EXTRACT(WEEK FROM created_at)::text as value FROM packages WHERE EXTRACT(YEAR FROM created_at) = $year AND EXTRACT(MONTH FROM created_at) = $month ORDER BY value",
-        "hide": 0,
+        "definition": "SELECT \n  COALESCE(executor_name, 'Unknown') as __value,\n  COALESCE(executor_name, 'Unknown') as __text\nFROM packages\nGROUP BY executor_name\nORDER BY COUNT(*) DESC;",
         "includeAll": true,
-        "label": "Semana",
+        "label": "carrier",
         "multi": true,
-        "name": "week",
+        "name": "carrier",
         "options": [],
-        "query": "SELECT DISTINCT EXTRACT(WEEK FROM created_at)::text as value FROM packages WHERE EXTRACT(YEAR FROM created_at) = $year AND EXTRACT(MONTH FROM created_at) = $month ORDER BY value",
+        "query": "SELECT \n  COALESCE(executor_name, 'Unknown') as __value,\n  COALESCE(executor_name, 'Unknown') as __text\nFROM packages\nGROUP BY executor_name\nORDER BY COUNT(*) DESC;",
         "refresh": 1,
         "regex": "",
-        "skipUrlSync": false,
-        "sort": 0,
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "definition": "SELECT DISTINCT \n  COALESCE(ship_to_address->>'province', 'Unknown') as __value,\n  COALESCE(ship_to_address->>'province', 'Unknown') as __text\nFROM shipments\nWHERE ship_to_address->>'province' IS NOT NULL\nORDER BY __text;",
+        "includeAll": true,
+        "label": "Province",
+        "multi": true,
+        "name": "province",
+        "options": [],
+        "query": "SELECT DISTINCT \n  COALESCE(ship_to_address->>'province', 'Unknown') as __value,\n  COALESCE(ship_to_address->>'province', 'Unknown') as __text\nFROM shipments\nWHERE ship_to_address->>'province' IS NOT NULL\nORDER BY __text;",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "definition": "\nSELECT DISTINCT \n  COALESCE(ship_to_address->>'district', 'Unknown') as __value,\n  COALESCE(ship_to_address->>'district', 'Unknown') as __text\nFROM shipments\nWHERE ship_to_address->>'district' IS NOT NULL\n  AND (\n    '${province:csv}' = '' \n    OR ship_to_address->>'province' IN (${province:singlequote})\n  )\nORDER BY __text;",
+        "includeAll": true,
+        "label": "District",
+        "multi": true,
+        "name": "district",
+        "options": [],
+        "query": "\nSELECT DISTINCT \n  COALESCE(ship_to_address->>'district', 'Unknown') as __value,\n  COALESCE(ship_to_address->>'district', 'Unknown') as __text\nFROM shipments\nWHERE ship_to_address->>'district' IS NOT NULL\n  AND (\n    '${province:csv}' = '' \n    OR ship_to_address->>'province' IN (${province:singlequote})\n  )\nORDER BY __text;",
+        "refresh": 1,
+        "regex": "",
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "definition": "SELECT DISTINCT \n  executor_status as __value, \n  executor_status as __text\nFROM executor_status_updates\nORDER BY __text\nLIMIT 50;",
+        "includeAll": true,
+        "label": "Status",
+        "multi": true,
+        "name": "status",
+        "options": [],
+        "query": "SELECT DISTINCT \n  executor_status as __value, \n  executor_status as __text\nFROM executor_status_updates\nORDER BY __text\nLIMIT 50;",
+        "refresh": 1,
+        "regex": "",
         "type": "query"
       }
     ]
   },
   "time": {
-    "from": "now-90d",
-    "to": "now"
+    "from": "2025-10-23T00:00:00.000Z",
+    "to": "2026-01-03T00:00:00.000Z"
   },
   "timepicker": {},
-  "timezone": "America/Lima",
-  "title": "Last Mile Ecommerce - Distribución",
-  "uid": "last-mile-ecommerce",
-  "version": 1,
-  "weekStart": "monday"
+  "timezone": "browser",
+  "title": "Last Mile Operations Analytics",
+  "uid": "adgwkmw",
+  "version": 37
 }
