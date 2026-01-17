@@ -1,0 +1,1045 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 5,
+  "links": [],
+  "panels": [
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Top reasons for non-delivery among accepted packages. Shows the most recent failure status for each undelivered package.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "percentage"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "id": 12,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH totals AS (\n  SELECT COUNT(DISTINCT p.package_id) as total_not_delivered\n  FROM packages p\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n    AND EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    )\n    AND NOT EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '7050'\n    )\n)\nSELECT \n  csm.es_name as reason,\n  COUNT(DISTINCT pal.package_id) as value,\n  ROUND((COUNT(DISTINCT pal.package_id)::numeric / NULLIF((SELECT total_not_delivered FROM totals), 0)::numeric) * 100, 1) as percentage\nFROM packages p\nJOIN packages_activity_log pal ON p.package_id = pal.package_id\nJOIN canonical_status_master csm ON pal.new_canonical_status_code = csm.code\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz\n  AND pal.new_canonical_status_code IN ('7060', '7080', '7090', '5524', '5525', '5526', '5527')\nGROUP BY csm.es_name\nORDER BY value DESC\nLIMIT 10;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Mayores razones de NO entrega",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "mawbs"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "MAWBS"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "packages"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "PACKAGES"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 13,
+        "x": 0,
+        "y": 8
+      },
+      "id": 2,
+      "options": {
+        "colorMode": "background_solid",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "vertical",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  COUNT(DISTINCT master_awb_no) AS mawbs,\n  COUNT(DISTINCT package_id) AS packages\nFROM packages\nWHERE \n  -- MAWB filter\n  (\n    '${mawb:csv}' = '' \n    OR master_awb_no IN (${mawb:singlequote})\n  )\n  -- Time filter (always applies)\n  AND created_at >= $__timeFrom()::timestamptz \n  AND created_at < $__timeTo()::timestamptz",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Data Range Summary",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Average time from departure (2080) to final delivery status (7050/7060)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 23,
+        "x": 0,
+        "y": 12
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  ROUND(\n    AVG(\n      EXTRACT(EPOCH FROM (delivered_time - picked_time)) / 3600\n    )::numeric,\n    2\n  ) as value\nFROM (\n  SELECT \n    p.package_id,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) as picked_time,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) as delivered_time\n  FROM packages p\n  JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  WHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz\n  AND pal.new_canonical_status_code IN ('7020', '7050')\n  GROUP BY p.package_id\n  HAVING \n    MAX(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) IS NOT NULL\n    AND MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) IS NOT NULL\n) subquery\nWHERE delivered_time > picked_time",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Cumplimiento de efectividad retiro",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Total packages in selected date range",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 0,
+        "y": 17
+      },
+      "id": 3,
+      "options": {
+        "colorMode": "none",
+        "graphMode": "area",
+        "justifyMode": "center",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "text": {},
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT COUNT(DISTINCT package_id) as value\nFROM packages\nWHERE \n  -- MAWB filter\n  (\n    '${mawb:csv}' = '' \n    OR master_awb_no IN (${mawb:singlequote})\n  )\n  -- Time filter (always applies)\n  AND created_at >= $__timeFrom()::timestamptz \n  AND created_at < $__timeTo()::timestamptz",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Total Paquetes(PACKAGES)",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Packages accepted by last mile partner (status 8005)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Aceptados"
+            },
+            "properties": []
+          },
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Porcentaje"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 3,
+        "y": 17
+      },
+      "id": 7,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "vertical",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1 FROM packages_activity_log pal \n    WHERE pal.package_id = p.package_id \n    AND pal.new_canonical_status_code = '8005'\n  ) THEN p.package_id END) as \"Aceptados\",\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8000'\n    ) THEN p.package_id END), 0)::numeric) * 100,\n    2\n  ) as \"Porcentaje\"\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Aceptados por UM",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Packages created in last mile (status 8000)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "percentage",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Porcentaje"
+            },
+            "properties": [
+              {
+                "id": "displayName",
+                "value": "del total paquetes"
+              },
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 6,
+        "y": 17
+      },
+      "id": 6,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "vertical",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/.*/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": false
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1 FROM packages_activity_log pal \n    WHERE pal.package_id = p.package_id \n    AND pal.new_canonical_status_code = '8000'\n  ) THEN p.package_id END) as \"Creados\",\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8000'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT p.package_id), 0)::numeric) * 100,\n    2\n  ) as \"Porcentaje\"\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Creados en UM",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Picked up/2080",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "Porcentaje"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 9,
+        "y": 17
+      },
+      "id": 8,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1 FROM packages_activity_log pal \n    WHERE pal.package_id = p.package_id \n    AND pal.new_canonical_status_code = '2080'\n  ) THEN p.package_id END) as \"Buscados\",\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '2080'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT p.package_id), 0)::numeric) * 100,\n    2\n  ) as \"Porcentaje\"\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Buscados por Courier",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Percentage of successfully delivered packages out of total accepted packages ",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 12,
+        "y": 17
+      },
+      "id": 9,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '7050'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    ) THEN p.package_id END), 0)::numeric) * 100,\n    2\n  ) as value\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Tasa de entrega",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Percentage of packages not delivered out of total accepted packages",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 15,
+        "y": 17
+      },
+      "id": 10,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "auto",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT\n  ROUND(\n    ((COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    ) THEN p.package_id END) - \n    COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '7050'\n    ) THEN p.package_id END))::numeric / \n    NULLIF(COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    ) THEN p.package_id END), 0)::numeric) * 100,\n    2\n  ) as value\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "No entregados",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Last mile delivery details breakdown. SLA: 72 hours from hub arrival (7020) to delivery (7050). NOTE: Will use pickup timestamp (2080) once data is available.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "percentage"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 12,
+        "x": 2,
+        "y": 22
+      },
+      "id": 11,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "auto",
+        "showValue": "auto",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "multi",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH package_details AS (\n  SELECT \n    p.package_id,\n    MAX(CASE WHEN pal.new_canonical_status_code = '8005' THEN pal.new_status_occurred_at END) as accepted_at,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) as picked_at,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) as delivered_at,\n    MAX(CASE WHEN pal.new_canonical_status_code IN ('7060', '7080') THEN 1 ELSE 0 END) as had_failed_attempt,\n    MAX(CASE WHEN pal.new_canonical_status_code IN ('9000', '9010', '9020') THEN 1 ELSE 0 END) as has_claim\n  FROM packages p\n  LEFT JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n  GROUP BY p.package_id\n),\ncategorized AS (\n  SELECT\n    package_id,\n    accepted_at,\n    picked_at,\n    delivered_at,\n    had_failed_attempt,\n    has_claim,\n    CASE \n      WHEN delivered_at IS NOT NULL AND picked_at IS NOT NULL \n      THEN EXTRACT(EPOCH FROM (delivered_at - picked_at))/3600 \n      ELSE NULL \n    END as delivery_hours\n  FROM package_details\n  WHERE accepted_at IS NOT NULL\n),\ntotals AS (\n  SELECT COUNT(*) as total_accepted FROM categorized\n),\nresults AS (\n  SELECT 'Entregados a tiempo' as category, COUNT(*) as value, 1 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours <= 72\n  \n  UNION ALL\n  \n  SELECT 'No Entregados' as category, COUNT(*) as value, 2 as sort_order\n  FROM categorized\n  WHERE delivered_at IS NULL\n  \n  UNION ALL\n  \n  SELECT 'Entregados fuera de SLA' as category, COUNT(*) as value, 3 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours > 72\n  \n  UNION ALL\n  \n  SELECT 'SLA 1ª visita' as category, COUNT(*) as value, 4 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours <= 72 AND had_failed_attempt = 0\n  \n  UNION ALL\n  \n  SELECT 'SLA luego 1ª visita' as category, COUNT(*) as value, 5 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours <= 72 AND had_failed_attempt = 1\n  \n  UNION ALL\n  \n  SELECT 'Con Siniestros' as category, COUNT(*) as value, 6 as sort_order\n  FROM categorized\n  WHERE has_claim = 1\n)\nSELECT \n  category,\n  value,\n  ROUND((value::numeric / NULLIF((SELECT total_accepted FROM totals), 0)::numeric) * 100, 1) as percentage\nFROM results\nORDER BY sort_order;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Detalles enviados UM ",
+      "type": "barchart"
+    }
+  ],
+  "preload": false,
+  "schemaVersion": 42,
+  "tags": [],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "text": [
+            "All"
+          ],
+          "value": [
+            "$__all"
+          ]
+        },
+        "definition": "SELECT DISTINCT master_awb_no AS __text, master_awb_no AS __value\nFROM packages\nWHERE master_awb_no IS NOT NULL\nORDER BY master_awb_no",
+        "includeAll": true,
+        "label": "Master (MAWB)",
+        "multi": true,
+        "name": "mawb",
+        "options": [],
+        "query": "SELECT DISTINCT master_awb_no AS __text, master_awb_no AS __value\nFROM packages\nWHERE master_awb_no IS NOT NULL\nORDER BY master_awb_no",
+        "refresh": 1,
+        "regex": "",
+        "staticOptions": [],
+        "type": "query"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-2y",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Ultimus",
+  "uid": "adjkvmz",
+  "version": 36
+}
