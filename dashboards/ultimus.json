@@ -18,131 +18,9 @@
   "editable": true,
   "fiscalYearStartMonth": 0,
   "graphTooltip": 0,
-  "id": 5,
+  "id": 7,
   "links": [],
   "panels": [
-    {
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "PB28DCAEFB3F86196"
-      },
-      "description": "Top reasons for non-delivery among accepted packages. Shows the most recent failure status for each undelivered package.",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "custom": {
-            "axisBorderShow": false,
-            "axisCenteredZero": false,
-            "axisColorMode": "text",
-            "axisLabel": "",
-            "axisPlacement": "auto",
-            "fillOpacity": 80,
-            "gradientMode": "none",
-            "hideFrom": {
-              "legend": false,
-              "tooltip": false,
-              "viz": false
-            },
-            "lineWidth": 1,
-            "scaleDistribution": {
-              "type": "linear"
-            },
-            "thresholdsStyle": {
-              "mode": "off"
-            }
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": [
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "percentage"
-            },
-            "properties": [
-              {
-                "id": "unit",
-                "value": "percent"
-              }
-            ]
-          }
-        ]
-      },
-      "gridPos": {
-        "h": 8,
-        "w": 12,
-        "x": 0,
-        "y": 0
-      },
-      "id": 12,
-      "options": {
-        "barRadius": 0,
-        "barWidth": 0.97,
-        "fullHighlight": false,
-        "groupWidth": 0.7,
-        "legend": {
-          "calcs": [],
-          "displayMode": "list",
-          "placement": "bottom",
-          "showLegend": true
-        },
-        "orientation": "horizontal",
-        "showValue": "always",
-        "stacking": "none",
-        "tooltip": {
-          "hideZeros": false,
-          "mode": "single",
-          "sort": "none"
-        },
-        "xTickLabelRotation": 0,
-        "xTickLabelSpacing": 0
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "dataset": "nucleo",
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "WITH totals AS (\n  SELECT COUNT(DISTINCT p.package_id) as total_not_delivered\n  FROM packages p\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n    AND EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    )\n    AND NOT EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '7050'\n    )\n)\nSELECT \n  csm.es_name as reason,\n  COUNT(DISTINCT pal.package_id) as value,\n  ROUND((COUNT(DISTINCT pal.package_id)::numeric / NULLIF((SELECT total_not_delivered FROM totals), 0)::numeric) * 100, 1) as percentage\nFROM packages p\nJOIN packages_activity_log pal ON p.package_id = pal.package_id\nJOIN canonical_status_master csm ON pal.new_canonical_status_code = csm.code\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz\n  AND pal.new_canonical_status_code IN ('7060', '7080', '7090', '5524', '5525', '5526', '5527')\nGROUP BY csm.es_name\nORDER BY value DESC\nLIMIT 10;",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Mayores razones de NO entrega",
-      "type": "barchart"
-    },
     {
       "datasource": {
         "type": "grafana-postgresql-datasource",
@@ -196,10 +74,10 @@
         ]
       },
       "gridPos": {
-        "h": 4,
-        "w": 13,
+        "h": 5,
+        "w": 24,
         "x": 0,
-        "y": 8
+        "y": 0
       },
       "id": 2,
       "options": {
@@ -226,7 +104,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  COUNT(DISTINCT master_awb_no) AS mawbs,\n  COUNT(DISTINCT package_id) AS packages\nFROM packages\nWHERE \n  -- MAWB filter\n  (\n    '${mawb:csv}' = '' \n    OR master_awb_no IN (${mawb:singlequote})\n  )\n  -- Time filter (always applies)\n  AND created_at >= $__timeFrom()::timestamptz \n  AND created_at < $__timeTo()::timestamptz",
+          "rawSql": "SELECT\n  COUNT(DISTINCT master_awb_no) AS mawbs,\n  COUNT(DISTINCT package_id) AS packages\nFROM packages\nWHERE \n  -- MAWB filter\n  (\n    '${mawb:csv}' = '' \n    OR master_awb_no IN (${mawb:singlequote})\n  )\n  -- Courier filter\n  AND (\n    '${courier:csv}' = ''\n    OR partner_name IN (${courier:singlequote})\n  )\n  -- Country filter\n  AND (\n    '${country:csv}' = ''\n    OR destination_country IN (${country:singlequote})\n  )\n  -- Time filter (always applies)\n  AND created_at >= $__timeFrom()::timestamptz \n  AND created_at < $__timeTo()::timestamptz",
           "refId": "A",
           "sql": {
             "columns": [
@@ -248,89 +126,6 @@
         }
       ],
       "title": "Data Range Summary",
-      "type": "stat"
-    },
-    {
-      "datasource": {
-        "type": "grafana-postgresql-datasource",
-        "uid": "PB28DCAEFB3F86196"
-      },
-      "description": "Average time from departure (2080) to final delivery status (7050/7060)",
-      "fieldConfig": {
-        "defaults": {
-          "color": {
-            "mode": "thresholds"
-          },
-          "mappings": [],
-          "thresholds": {
-            "mode": "absolute",
-            "steps": [
-              {
-                "color": "green",
-                "value": 0
-              },
-              {
-                "color": "red",
-                "value": 80
-              }
-            ]
-          }
-        },
-        "overrides": []
-      },
-      "gridPos": {
-        "h": 5,
-        "w": 23,
-        "x": 0,
-        "y": 12
-      },
-      "id": 5,
-      "options": {
-        "colorMode": "value",
-        "graphMode": "area",
-        "justifyMode": "auto",
-        "orientation": "auto",
-        "percentChangeColorMode": "standard",
-        "reduceOptions": {
-          "calcs": [
-            "lastNotNull"
-          ],
-          "fields": "/^value$/",
-          "values": false
-        },
-        "showPercentChange": false,
-        "textMode": "value",
-        "wideLayout": true
-      },
-      "pluginVersion": "12.3.1",
-      "targets": [
-        {
-          "dataset": "nucleo",
-          "editorMode": "code",
-          "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT \n  ROUND(\n    AVG(\n      EXTRACT(EPOCH FROM (delivered_time - picked_time)) / 3600\n    )::numeric,\n    2\n  ) as value\nFROM (\n  SELECT \n    p.package_id,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) as picked_time,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) as delivered_time\n  FROM packages p\n  JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  WHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz\n  AND pal.new_canonical_status_code IN ('7020', '7050')\n  GROUP BY p.package_id\n  HAVING \n    MAX(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) IS NOT NULL\n    AND MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) IS NOT NULL\n) subquery\nWHERE delivered_time > picked_time",
-          "refId": "A",
-          "sql": {
-            "columns": [
-              {
-                "parameters": [],
-                "type": "function"
-              }
-            ],
-            "groupBy": [
-              {
-                "property": {
-                  "type": "string"
-                },
-                "type": "groupBy"
-              }
-            ],
-            "limit": 50
-          }
-        }
-      ],
-      "title": "Cumplimiento de efectividad retiro",
       "type": "stat"
     },
     {
@@ -365,7 +160,7 @@
         "h": 5,
         "w": 3,
         "x": 0,
-        "y": 17
+        "y": 5
       },
       "id": 3,
       "options": {
@@ -393,7 +188,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT COUNT(DISTINCT package_id) as value\nFROM packages\nWHERE \n  -- MAWB filter\n  (\n    '${mawb:csv}' = '' \n    OR master_awb_no IN (${mawb:singlequote})\n  )\n  -- Time filter (always applies)\n  AND created_at >= $__timeFrom()::timestamptz \n  AND created_at < $__timeTo()::timestamptz",
+          "rawSql": "SELECT COUNT(DISTINCT package_id) as value\nFROM packages\nWHERE \n  -- MAWB filter\n  (\n    '${mawb:csv}' = '' \n    OR master_awb_no IN (${mawb:singlequote})\n  )\n  -- Country filter\n  AND (\n    '${country:csv}' = ''\n    OR destination_country IN (${country:singlequote})\n  )\n  -- Time filter (always applies)\n  AND created_at >= $__timeFrom()::timestamptz \n  AND created_at < $__timeTo()::timestamptz",
           "refId": "A",
           "sql": {
             "columns": [
@@ -447,14 +242,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Aceptados"
-            },
-            "properties": []
-          },
-          {
-            "matcher": {
-              "id": "byName",
-              "options": "Porcentaje"
+              "options": "del total creados en UM"
             },
             "properties": [
               {
@@ -469,7 +257,7 @@
         "h": 5,
         "w": 3,
         "x": 3,
-        "y": 17
+        "y": 5
       },
       "id": 7,
       "options": {
@@ -496,7 +284,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n  COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1 FROM packages_activity_log pal \n    WHERE pal.package_id = p.package_id \n    AND pal.new_canonical_status_code = '8005'\n  ) THEN p.package_id END) as \"Aceptados\",\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8000'\n    ) THEN p.package_id END), 0)::numeric) * 100,\n    2\n  ) as \"Porcentaje\"\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
+          "rawSql": "SELECT \n  COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1 FROM packages_activity_log pal \n    WHERE pal.package_id = p.package_id \n    AND pal.new_canonical_status_code = '8005'\n  ) THEN p.package_id END) as \"Aceptados\",\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8000'\n    ) THEN p.package_id END), 0)::numeric) * 100,\n    2\n  ) as \"del total creados en UM\"\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n  AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
           "refId": "A",
           "sql": {
             "columns": [
@@ -550,13 +338,9 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Porcentaje"
+              "options": "del total paquetes"
             },
             "properties": [
-              {
-                "id": "displayName",
-                "value": "del total paquetes"
-              },
               {
                 "id": "unit",
                 "value": "percent"
@@ -569,7 +353,7 @@
         "h": 5,
         "w": 3,
         "x": 6,
-        "y": 17
+        "y": 5
       },
       "id": 6,
       "options": {
@@ -582,7 +366,7 @@
           "calcs": [
             "lastNotNull"
           ],
-          "fields": "/.*/",
+          "fields": "",
           "values": false
         },
         "showPercentChange": false,
@@ -596,7 +380,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT \n  COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1 FROM packages_activity_log pal \n    WHERE pal.package_id = p.package_id \n    AND pal.new_canonical_status_code = '8000'\n  ) THEN p.package_id END) as \"Creados\",\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8000'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT p.package_id), 0)::numeric) * 100,\n    2\n  ) as \"Porcentaje\"\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
+          "rawSql": "SELECT \n  COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1 FROM packages_activity_log pal \n    WHERE pal.package_id = p.package_id \n    AND pal.new_canonical_status_code = '8000'\n  ) THEN p.package_id END) as \"Creados\",\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8000'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT p.package_id), 0)::numeric) * 100,\n    2\n  ) as \"del total paquetes\"\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n  AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
           "refId": "A",
           "sql": {
             "columns": [
@@ -650,7 +434,7 @@
           {
             "matcher": {
               "id": "byName",
-              "options": "Porcentaje"
+              "options": "del total aceptados por UM"
             },
             "properties": [
               {
@@ -665,14 +449,14 @@
         "h": 5,
         "w": 3,
         "x": 9,
-        "y": 17
+        "y": 5
       },
       "id": 8,
       "options": {
         "colorMode": "value",
         "graphMode": "area",
         "justifyMode": "auto",
-        "orientation": "auto",
+        "orientation": "vertical",
         "percentChangeColorMode": "standard",
         "reduceOptions": {
           "calcs": [
@@ -682,7 +466,7 @@
           "values": false
         },
         "showPercentChange": false,
-        "textMode": "auto",
+        "textMode": "value_and_name",
         "wideLayout": true
       },
       "pluginVersion": "12.3.1",
@@ -692,7 +476,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1 FROM packages_activity_log pal \n    WHERE pal.package_id = p.package_id \n    AND pal.new_canonical_status_code = '2080'\n  ) THEN p.package_id END) as \"Buscados\",\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '2080'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT p.package_id), 0)::numeric) * 100,\n    2\n  ) as \"Porcentaje\"\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
+          "rawSql": "SELECT\n  COUNT(DISTINCT CASE WHEN EXISTS (\n    SELECT 1 FROM packages_activity_log pal \n    WHERE pal.package_id = p.package_id \n    AND pal.new_canonical_status_code = '2080'\n  ) THEN p.package_id END) as \"Buscados\",\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '2080'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    ) THEN p.package_id END), 0)::numeric) * 100,\n    2\n  ) as \"del total aceptados por UM\"\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n  AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
           "refId": "A",
           "sql": {
             "columns": [
@@ -732,15 +516,16 @@
             "mode": "absolute",
             "steps": [
               {
-                "color": "green",
+                "color": "red",
                 "value": 0
               },
               {
-                "color": "red",
+                "color": "green",
                 "value": 80
               }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
@@ -748,7 +533,7 @@
         "h": 5,
         "w": 3,
         "x": 12,
-        "y": 17
+        "y": 5
       },
       "id": 9,
       "options": {
@@ -775,7 +560,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ROUND(\n    (COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '7050'\n    ) THEN p.package_id END)::numeric / \n    NULLIF(COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    ) THEN p.package_id END), 0)::numeric) * 100,\n    2\n  ) as value\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
+          "rawSql": "WITH package_states AS (\n  SELECT \n    p.package_id,\n    MAX(CASE WHEN pal.new_canonical_status_code = '8005' THEN 1 ELSE 0 END) as is_accepted,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN 1 ELSE 0 END) as is_delivered\n  FROM packages p\n  JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n    AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n    AND pal.new_canonical_status_code IN ('8005', '7050')\n  GROUP BY p.package_id\n)\nSELECT\n  ROUND(\n    (SUM(CASE WHEN is_delivered = 1 AND is_accepted = 1 THEN 1 ELSE 0 END)::numeric / \n    NULLIF(SUM(is_accepted), 0)::numeric) * 100,\n    2\n  ) as value\nFROM package_states",
           "refId": "A",
           "sql": {
             "columns": [
@@ -820,18 +605,19 @@
               },
               {
                 "color": "red",
-                "value": 80
+                "value": 20
               }
             ]
-          }
+          },
+          "unit": "percent"
         },
         "overrides": []
       },
       "gridPos": {
         "h": 5,
-        "w": 3,
+        "w": 2,
         "x": 15,
-        "y": 17
+        "y": 5
       },
       "id": 10,
       "options": {
@@ -858,7 +644,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "SELECT\n  ROUND(\n    ((COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    ) THEN p.package_id END) - \n    COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '7050'\n    ) THEN p.package_id END))::numeric / \n    NULLIF(COUNT(DISTINCT CASE WHEN EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    ) THEN p.package_id END), 0)::numeric) * 100,\n    2\n  ) as value\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz",
+          "rawSql": "WITH package_states AS (\n  SELECT \n    p.package_id,\n    MAX(CASE WHEN pal.new_canonical_status_code = '8005' THEN 1 ELSE 0 END) as is_accepted,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN 1 ELSE 0 END) as is_delivered\n  FROM packages p\n  JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n    AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n    AND pal.new_canonical_status_code IN ('8005', '7050')\n  GROUP BY p.package_id\n)\nSELECT\n  ROUND(\n    ((SUM(is_accepted) - SUM(CASE WHEN is_delivered = 1 AND is_accepted = 1 THEN 1 ELSE 0 END))::numeric / \n    NULLIF(SUM(is_accepted), 0)::numeric) * 100,\n    2\n  ) as value\nFROM package_states",
           "refId": "A",
           "sql": {
             "columns": [
@@ -880,6 +666,246 @@
         }
       ],
       "title": "No entregados",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Average time from departure (2080) to final delivery status (7050/7060)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "suffix: hrs."
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 17,
+        "y": 5
+      },
+      "id": 5,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "/^value$/",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value",
+        "wideLayout": true
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH package_times AS (\n  SELECT \n    p.package_id,\n    p.created_at as ata_at,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) as delivered_at\n  FROM packages p\n  LEFT JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n    AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n  GROUP BY p.package_id, p.created_at\n)\nSELECT\n  PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (delivered_at - ata_at))/3600) as value\nFROM package_times\nWHERE delivered_at IS NOT NULL;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Tiempo de Entrega UM",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "P95 Interior delivery time (from pickup to delivery)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "suffix: Días"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 2,
+        "x": 19,
+        "y": 5
+      },
+      "id": 19,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "vertical",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": false
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH package_times AS (\n  SELECT \n    p.package_id,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) as picked_at,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) as delivered_at\n  FROM packages p\n  JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  LEFT JOIN vw_get_shipments s ON p.shipment_id = s.shipment_id\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n    AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n    AND NOT (\n      (p.destination_country = 'PE' AND UPPER(TRIM(s.region)) = 'LIMA')\n      OR (p.destination_country = 'CL' AND UPPER(TRIM(s.region)) = 'SANTIAGO')\n    )\n  GROUP BY p.package_id\n)\nSELECT\n  PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (delivered_at - picked_at))/(3600*24)) as \" \"\nFROM package_times\nWHERE picked_at IS NOT NULL AND delivered_at IS NOT NULL;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "P95 Interior",
+      "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "P95 Local delivery time (from pickup to delivery)",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          },
+          "unit": "suffix: Días"
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 5,
+        "w": 3,
+        "x": 21,
+        "y": 5
+      },
+      "id": 18,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "vertical",
+        "percentChangeColorMode": "standard",
+        "reduceOptions": {
+          "calcs": [
+            "lastNotNull"
+          ],
+          "fields": "",
+          "values": false
+        },
+        "showPercentChange": false,
+        "textMode": "value_and_name",
+        "wideLayout": false
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH package_times AS (\n  SELECT \n    p.package_id,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) as picked_at,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) as delivered_at\n  FROM packages p\n  JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  LEFT JOIN vw_get_shipments s ON p.shipment_id = s.shipment_id\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n    AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n    AND (\n      (p.destination_country = 'PE' AND UPPER(TRIM(s.region)) = 'LIMA')\n      OR (p.destination_country = 'CL' AND UPPER(TRIM(s.region)) = 'SANTIAGO')\n    )\n  GROUP BY p.package_id\n)\nSELECT\n  PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY EXTRACT(EPOCH FROM (delivered_at - picked_at))/(3600*24)) as \" \"\nFROM package_times\nWHERE picked_at IS NOT NULL AND delivered_at IS NOT NULL;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "P95 Local",
       "type": "stat"
     },
     {
@@ -945,10 +971,10 @@
         ]
       },
       "gridPos": {
-        "h": 8,
+        "h": 11,
         "w": 12,
-        "x": 2,
-        "y": 22
+        "x": 0,
+        "y": 10
       },
       "id": 11,
       "options": {
@@ -980,7 +1006,7 @@
           "editorMode": "code",
           "format": "table",
           "rawQuery": true,
-          "rawSql": "WITH package_details AS (\n  SELECT \n    p.package_id,\n    MAX(CASE WHEN pal.new_canonical_status_code = '8005' THEN pal.new_status_occurred_at END) as accepted_at,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) as picked_at,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) as delivered_at,\n    MAX(CASE WHEN pal.new_canonical_status_code IN ('7060', '7080') THEN 1 ELSE 0 END) as had_failed_attempt,\n    MAX(CASE WHEN pal.new_canonical_status_code IN ('9000', '9010', '9020') THEN 1 ELSE 0 END) as has_claim\n  FROM packages p\n  LEFT JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n  GROUP BY p.package_id\n),\ncategorized AS (\n  SELECT\n    package_id,\n    accepted_at,\n    picked_at,\n    delivered_at,\n    had_failed_attempt,\n    has_claim,\n    CASE \n      WHEN delivered_at IS NOT NULL AND picked_at IS NOT NULL \n      THEN EXTRACT(EPOCH FROM (delivered_at - picked_at))/3600 \n      ELSE NULL \n    END as delivery_hours\n  FROM package_details\n  WHERE accepted_at IS NOT NULL\n),\ntotals AS (\n  SELECT COUNT(*) as total_accepted FROM categorized\n),\nresults AS (\n  SELECT 'Entregados a tiempo' as category, COUNT(*) as value, 1 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours <= 72\n  \n  UNION ALL\n  \n  SELECT 'No Entregados' as category, COUNT(*) as value, 2 as sort_order\n  FROM categorized\n  WHERE delivered_at IS NULL\n  \n  UNION ALL\n  \n  SELECT 'Entregados fuera de SLA' as category, COUNT(*) as value, 3 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours > 72\n  \n  UNION ALL\n  \n  SELECT 'SLA 1ª visita' as category, COUNT(*) as value, 4 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours <= 72 AND had_failed_attempt = 0\n  \n  UNION ALL\n  \n  SELECT 'SLA luego 1ª visita' as category, COUNT(*) as value, 5 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours <= 72 AND had_failed_attempt = 1\n  \n  UNION ALL\n  \n  SELECT 'Con Siniestros' as category, COUNT(*) as value, 6 as sort_order\n  FROM categorized\n  WHERE has_claim = 1\n)\nSELECT \n  category,\n  value,\n  ROUND((value::numeric / NULLIF((SELECT total_accepted FROM totals), 0)::numeric) * 100, 1) as percentage\nFROM results\nORDER BY sort_order;",
+          "rawSql": "WITH package_details AS (\n  SELECT \n    p.package_id,\n    MAX(CASE WHEN pal.new_canonical_status_code = '8005' THEN pal.new_status_occurred_at END) as accepted_at,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7020' THEN pal.new_status_occurred_at END) as picked_at,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN pal.new_status_occurred_at END) as delivered_at,\n    MAX(CASE WHEN pal.new_canonical_status_code IN ('7060', '7080') THEN 1 ELSE 0 END) as had_failed_attempt,\n    MAX(CASE WHEN pal.new_canonical_status_code IN ('9000', '9010', '9020') THEN 1 ELSE 0 END) as has_claim\n  FROM packages p\n  LEFT JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n    AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n  GROUP BY p.package_id\n),\ncategorized AS (\n  SELECT\n    package_id,\n    accepted_at,\n    picked_at,\n    delivered_at,\n    had_failed_attempt,\n    has_claim,\n    CASE \n      WHEN delivered_at IS NOT NULL AND picked_at IS NOT NULL \n      THEN EXTRACT(EPOCH FROM (delivered_at - picked_at))/3600 \n      ELSE NULL \n    END as delivery_hours\n  FROM package_details\n  WHERE accepted_at IS NOT NULL\n),\ntotals AS (\n  SELECT COUNT(*) as total_accepted FROM categorized\n),\nresults AS (\n  SELECT 'Entregados a tiempo' as category, COUNT(*) as value, 1 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours <= 72\n  \n  UNION ALL\n  \n  SELECT 'No Entregados' as category, COUNT(*) as value, 2 as sort_order\n  FROM categorized\n  WHERE delivered_at IS NULL\n  \n  UNION ALL\n  \n  SELECT 'Entregados fuera de SLA' as category, COUNT(*) as value, 3 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours > 72\n  \n  UNION ALL\n  \n  SELECT 'SLA 1ª visita' as category, COUNT(*) as value, 4 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours <= 72 AND had_failed_attempt = 0\n  \n  UNION ALL\n  \n  SELECT 'SLA luego 1ª visita' as category, COUNT(*) as value, 5 as sort_order\n  FROM categorized\n  WHERE delivery_hours IS NOT NULL AND delivery_hours <= 72 AND had_failed_attempt = 1\n  \n  UNION ALL\n  \n  SELECT 'Con Siniestros' as category, COUNT(*) as value, 6 as sort_order\n  FROM categorized\n  WHERE has_claim = 1\n)\nSELECT \n  category || ' (' || ROUND((value::numeric / NULLIF((SELECT total_accepted FROM totals), 0)::numeric) * 100, 1) || '%)' as category,\n  value\nFROM results\nORDER BY sort_order;",
           "refId": "A",
           "sql": {
             "columns": [
@@ -1003,6 +1029,294 @@
       ],
       "title": "Detalles enviados UM ",
       "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "description": "Top reasons for non-delivery among accepted packages. Shows the most recent failure status for each undelivered package.",
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "axisBorderShow": false,
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "fillOpacity": 80,
+            "gradientMode": "none",
+            "hideFrom": {
+              "legend": false,
+              "tooltip": false,
+              "viz": false
+            },
+            "lineWidth": 1,
+            "scaleDistribution": {
+              "type": "linear"
+            },
+            "thresholdsStyle": {
+              "mode": "off"
+            }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              },
+              {
+                "color": "red",
+                "value": 80
+              }
+            ]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {
+              "id": "byName",
+              "options": "percentage"
+            },
+            "properties": [
+              {
+                "id": "unit",
+                "value": "percent"
+              }
+            ]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 11,
+        "w": 12,
+        "x": 12,
+        "y": 10
+      },
+      "id": 12,
+      "options": {
+        "barRadius": 0,
+        "barWidth": 0.97,
+        "fullHighlight": false,
+        "groupWidth": 0.7,
+        "legend": {
+          "calcs": [],
+          "displayMode": "list",
+          "placement": "bottom",
+          "showLegend": true
+        },
+        "orientation": "horizontal",
+        "showValue": "always",
+        "stacking": "none",
+        "tooltip": {
+          "hideZeros": false,
+          "mode": "single",
+          "sort": "none"
+        },
+        "xTickLabelRotation": 0,
+        "xTickLabelSpacing": 0
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH totals AS (\n  SELECT COUNT(DISTINCT p.package_id) as total_not_delivered\n  FROM packages p\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n    AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n    AND EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '8005'\n    )\n    AND NOT EXISTS (\n      SELECT 1 FROM packages_activity_log pal \n      WHERE pal.package_id = p.package_id \n      AND pal.new_canonical_status_code = '7050'\n    )\n)\nSELECT \n  csm.es_name || ' (' || ROUND((COUNT(DISTINCT pal.package_id)::numeric / NULLIF((SELECT total_not_delivered FROM totals), 0)::numeric) * 100, 1) || '%)' as reason,\n  COUNT(DISTINCT pal.package_id) as value\nFROM packages p\nJOIN packages_activity_log pal ON p.package_id = pal.package_id\nJOIN canonical_status_master csm ON pal.new_canonical_status_code = csm.code\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n  AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz\n  AND pal.new_canonical_status_code IN ('7060', '7080', '7090', '5524', '5525', '5526', '5527')\nGROUP BY csm.es_name\nORDER BY value DESC\nLIMIT 10;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Mayores razones de NO entrega",
+      "type": "barchart"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 21
+      },
+      "id": 24,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "WITH package_events AS (\n  SELECT \n    p.package_id,\n    p.master_awb_no,\n    MAX(CASE WHEN pal.new_canonical_status_code = '8005' THEN 1 ELSE 0 END) as is_accepted,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7020' THEN 1 ELSE 0 END) as is_picked,\n    MAX(CASE WHEN pal.new_canonical_status_code = '7050' THEN 1 ELSE 0 END) as is_delivered,\n    MIN(CASE WHEN pal.new_canonical_status_code = '8005' THEN pal.new_status_occurred_at END) as first_accepted_at\n  FROM packages p\n  LEFT JOIN packages_activity_log pal ON p.package_id = pal.package_id\n  WHERE \n    ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n    AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n    AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n    AND p.created_at >= $__timeFrom()::timestamptz \n    AND p.created_at < $__timeTo()::timestamptz\n  GROUP BY p.package_id, p.master_awb_no\n)\nSELECT \n  master_awb_no as \"# MAWB\",\n  COUNT(DISTINCT package_id) as \"Paquetes Totales\",\n  COUNT(DISTINCT package_id) as \"Creados UM\",\n  SUM(is_accepted) as \"Aceptados por UM\",\n  SUM(is_picked) as \"Buscados UM\",\n  SUM(is_delivered) as \"Entregados UM\",\n  (SUM(is_accepted) - SUM(is_delivered)) as \"No entregados UM\",\n  MIN(first_accepted_at)::date as \"Inicio Currier\"\nFROM package_events\nWHERE master_awb_no IS NOT NULL\nGROUP BY master_awb_no\nORDER BY master_awb_no;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Detalle por master",
+      "type": "table"
+    },
+    {
+      "datasource": {
+        "type": "grafana-postgresql-datasource",
+        "uid": "PB28DCAEFB3F86196"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "color": {
+            "mode": "thresholds"
+          },
+          "custom": {
+            "align": "auto",
+            "cellOptions": {
+              "type": "auto"
+            },
+            "footer": {
+              "reducers": []
+            },
+            "inspect": false
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": 0
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 29
+      },
+      "id": 25,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {
+          "fields": "",
+          "reducer": [
+            "sum"
+          ],
+          "show": false
+        },
+        "showHeader": true,
+        "sortBy": []
+      },
+      "pluginVersion": "12.3.1",
+      "targets": [
+        {
+          "dataset": "nucleo",
+          "editorMode": "code",
+          "format": "table",
+          "rawQuery": true,
+          "rawSql": "SELECT \n  p.package_id as \"ID Paquete\",\n  p.tracking_number as \"# de seguimiento Paquete\",\n  p.master_awb_no as \"# MAWB\",\n  p.created_at::timestamp as \"Creado en UM\",\n  (SELECT MIN(new_status_occurred_at) FROM packages_activity_log WHERE package_id = p.package_id AND new_canonical_status_code = '8005')::timestamp as \"Aceptados por UM\",\n  (SELECT MIN(new_status_occurred_at) FROM packages_activity_log WHERE package_id = p.package_id AND new_canonical_status_code = '7020')::timestamp as \"Buscados UM\",\n  (SELECT MIN(new_status_occurred_at) FROM packages_activity_log WHERE package_id = p.package_id AND new_canonical_status_code = '7050')::timestamp as \"Entregados UM\"\nFROM packages p\nWHERE \n  ('${mawb:csv}' = '' OR p.master_awb_no IN (${mawb:singlequote}))\n  AND ('${courier:csv}' = '' OR p.partner_name IN (${courier:singlequote}))\n  AND ('${country:csv}' = '' OR p.destination_country IN (${country:singlequote}))\n  AND p.created_at >= $__timeFrom()::timestamptz \n  AND p.created_at < $__timeTo()::timestamptz\nORDER BY p.master_awb_no, p.tracking_number;",
+          "refId": "A",
+          "sql": {
+            "columns": [
+              {
+                "parameters": [],
+                "type": "function"
+              }
+            ],
+            "groupBy": [
+              {
+                "property": {
+                  "type": "string"
+                },
+                "type": "groupBy"
+              }
+            ],
+            "limit": 50
+          }
+        }
+      ],
+      "title": "Detalle por paquete",
+      "type": "table"
     }
   ],
   "preload": false,
@@ -1012,9 +1326,26 @@
     "list": [
       {
         "current": {
-          "text": [
-            "All"
-          ],
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "definition": "SELECT DISTINCT destination_country AS __text, destination_country AS __value FROM packages WHERE destination_country IS NOT NULL ORDER BY destination_country",
+        "includeAll": true,
+        "label": "Country",
+        "multi": true,
+        "name": "country",
+        "options": [],
+        "query": "SELECT DISTINCT destination_country AS __text, destination_country AS __value FROM packages WHERE destination_country IS NOT NULL ORDER BY destination_country",
+        "refresh": 1,
+        "regex": "",
+        "staticOptions": [],
+        "type": "query"
+      },
+      {
+        "current": {
+          "text": "All",
           "value": [
             "$__all"
           ]
@@ -1030,16 +1361,35 @@
         "regex": "",
         "staticOptions": [],
         "type": "query"
+      },
+      {
+        "current": {
+          "text": "All",
+          "value": [
+            "$__all"
+          ]
+        },
+        "definition": "SELECT DISTINCT partner_name AS __text, partner_name AS __value FROM packages WHERE partner_name IS NOT NULL ORDER BY partner_name",
+        "includeAll": true,
+        "label": "Courier",
+        "multi": true,
+        "name": "courier",
+        "options": [],
+        "query": "SELECT DISTINCT partner_name AS __text, partner_name AS __value FROM packages WHERE partner_name IS NOT NULL ORDER BY partner_name",
+        "refresh": 1,
+        "regex": "",
+        "staticOptions": [],
+        "type": "query"
       }
     ]
   },
   "time": {
-    "from": "now-2y",
+    "from": "now-5y",
     "to": "now"
   },
   "timepicker": {},
   "timezone": "browser",
   "title": "Ultimus",
   "uid": "adjkvmz",
-  "version": 36
+  "version": 80
 }
